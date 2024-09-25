@@ -1,4 +1,5 @@
-import {Column,DeleteDateColumn} from "typeorm";
+import {Column,DeleteDateColumn, Entity} from "typeorm";
+@Entity()
 export class User {
     @Column({primary:true,generated:true})
     id : number;
@@ -15,9 +16,9 @@ export class User {
     @Column({length:255})
     image:string;
     @Column()
-    links:[string];
+    links:string;
     @Column()
-    projects:[string];
+    projects:string;
     @Column({default:"user"})
     role:string;
     @DeleteDateColumn()
