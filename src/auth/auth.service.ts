@@ -5,6 +5,8 @@ import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcryptjs from "bcryptjs";
 import { LoginDto } from './dto/login.dto';
+import { GoogleUser } from './interfaces/auth.interface';
+import { Response } from 'express';
 
 
 @Injectable()
@@ -13,6 +15,23 @@ export class AuthService {
     private readonly userService: UsersService,
     private readonly jwtService: JwtService
   ) { }
+
+
+
+
+  // //Google Auth//
+async validateGoogleUser(googleUser : RegisterDto){
+  const user = await this.userService.findOneByEmail(googleUser.email)
+  if (user) return user;
+  return await this.userService.create(googleUser);
+}
+
+
+  //Google Auth//
+
+  generateJwt(payload) {
+    return  this.jwtService.signAsync(payload);
+  }
 
   async register({ fullName, email, password }: RegisterDto) {
     const user = await this.userService.findOneByEmail(email);
@@ -37,10 +56,25 @@ export class AuthService {
       throw new UnauthorizedException("Invalid password");
     }
     const payload = { email: user.email }
-    const token = await this.jwtService.signAsync(payload)
+    const token = await this.generateJwt(payload);
     return {
       token: token,
       email: user.email
     };
+  }
+
+  async googleLogin(user){
+    if (!user) {
+      throw new BadRequestException('Unauthenticated');
+    }
+    const userExist = await this.userService.findOneByEmail(user.email);
+
+    if (!userExist) {
+      return this.register(user)
+    }
+    return this.generateJwt({
+      sub:userExist.id,
+      email:userExist.email
+    });
   }
 }
